@@ -25,7 +25,10 @@
             <div class="header-actions">
                 <button class="icon-btn" id="searchToggle"><i class="fas fa-search"></i></button>
                 <button class="icon-btn cart-btn"><i class="fas fa-shopping-cart"></i><span class="cart-badge">0</span></button>
-                <button class="btn-outline">Войти</button>
+                <div id="authButtons">
+                    <button class="btn-outline" id="openLoginModal">Войти</button>
+                </div>
+                <div id="userMenuContainer"></div>
             </div>
             <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
         </div>
@@ -192,7 +195,91 @@
             <p>© 2025 Ebook. Все права защищены.</p>
         </div>
     </footer>
-
+    <div id="userMenuContainer"></div>
+        
+        <!-- ========== СЮДА ВСТАВИТЬ МОДАЛЬНОЕ ОКНО ========== -->
+        <div id="authModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Вход в аккаунт</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                
+                <!-- Форма входа -->
+                <div id="loginForm" class="auth-form">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" placeholder="example@mail.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Пароль</label>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required>
+                    </div>
+                    <button id="loginBtn" class="btn-primary auth-submit">Войти</button>
+                    <p class="auth-switch">
+                        Нет аккаунта? <a href="#" id="switchToRegister">Зарегистрироваться</a>
+                    </p>
+                    <p class="auth-switch">
+                        <a href="#" id="forgotPassword">Забыли пароль?</a>
+                    </p>
+                </div>
+                
+                <!-- Форма регистрации -->
+                <div id="registerForm" class="auth-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="regUsername">Имя пользователя</label>
+                        <input type="text" id="regUsername" placeholder="Иван Иванов" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail">Email</label>
+                        <input type="email" id="regEmail" placeholder="example@mail.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Пароль</label>
+                        <input type="password" id="regPassword" placeholder="минимум 6 символов" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regConfirmPassword">Подтвердите пароль</label>
+                        <input type="password" id="regConfirmPassword" placeholder="••••••••" required>
+                    </div>
+                    <button id="registerBtn" class="btn-primary auth-submit">Зарегистрироваться</button>
+                    <p class="auth-switch">
+                        Уже есть аккаунт? <a href="#" id="switchToLogin">Войти</a>
+                    </p>
+                </div>
+                
+                <!-- Форма сброса пароля -->
+                <div id="resetForm" class="auth-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="resetEmail">Email</label>
+                        <input type="email" id="resetEmail" placeholder="example@mail.com" required>
+                    </div>
+                    <button id="resetBtn" class="btn-primary auth-submit">Сбросить пароль</button>
+                    <p class="auth-switch">
+                        <a href="#" id="backToLogin">Вернуться ко входу</a>
+                    </p>
+                </div>
+                
+                <!-- Сообщения -->
+                <div id="authMessage" class="auth-message"></div>
+            </div>
+        </div>
+        <!-- ========== КОНЕЦ МОДАЛЬНОГО ОКНА ========== -->
+        
+        <!-- Профиль пользователя -->
+        <div id="userMenu" class="user-menu" style="display: none;">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span id="userName"></span>
+            </div>
+            <div class="user-dropdown">
+                <a href="#" id="userProfileBtn"><i class="fas fa-user"></i> Профиль</a>
+                <a href="#" id="userOrdersBtn"><i class="fas fa-book"></i> Мои книги</a>
+                <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+            </div>
+        </div>
+        
+        <div id="userMenuContainer"></div>
     <script type="module" src="script.js"></script>
 </body>
 </html>
