@@ -9,41 +9,91 @@ let currentUser = null;
 // Регистрация нового пользователя
 export async function registerUser(email, password, username) {
     try {
+        console.log('Начинаем регистрацию:', { email, username });
+        
         // 1. Регистрируем пользователя в Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
             password: password,
             options: {
                 data: {
-                    username: username,
-                    avatar_url: null
+                    username: username || email.split('@')[0]
                 }
             }
         });
         
-        if (authError) throw authError;
+        if (authError) {
+            console.error('Ошибка Auth:', authError);
+            throw authError;
+        }
         
-        // 2. Сохраняем дополнительные данные в таблицу profiles
-        if (authData.user) {
-            const { error: profileError } = await supabase
+        console.log('Auth успешен:', authData);
+        
+        if (!authData.user) {
+            throw new Error('Пользователь не создан');
+        }
+        
+        // 2. Ждем немного, чтобы триггер сработал
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 3. Проверяем, создался ли профиль
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authData.user.id)
+            .maybeSingle();
+        
+        if (profileError) {
+            console.error('Ошибка при проверке профиля:', profileError);
+        }
+        
+        if (!profile) {
+            // Если профиль не создался, создаем вручную
+            console.log('Профиль не найден, создаем вручную...');
+            const { error: insertError } = await supabase
                 .from('profiles')
                 .insert([
                     {
                         id: authData.user.id,
                         email: email,
-                        username: username,
-                        created_at: new Date(),
-                        role: 'user'
+                        username: username || email.split('@')[0],
+                        created_at: new Date()
                     }
                 ]);
             
-            if (profileError) console.error('Ошибка сохранения профиля:', profileError);
+            if (insertError) {
+                console.error('Ошибка при создании профиля:', insertError);
+                // Не возвращаем ошибку, так как пользователь уже создан
+            } else {
+                console.log('Профиль успешно создан вручную');
+            }
         }
         
-        return { success: true, user: authData.user };
+        return { 
+            success: true, 
+            user: authData.user,
+            message: 'Регистрация успешна! Проверьте почту для подтверждения (если требуется).'
+        };
+        
     } catch (error) {
         console.error('Ошибка регистрации:', error);
-        return { success: false, error: error.message };
+        
+        // Понятное сообщение для пользователя
+        let userMessage = 'Ошибка регистрации';
+        if (error.message.includes('User already registered')) {
+            userMessage = 'Пользователь с таким email уже зарегистрирован';
+        } else if (error.message.includes('password')) {
+            userMessage = 'Пароль слишком слабый. Используйте минимум 6 символов';
+        } else if (error.message.includes('Database error')) {
+            userMessage = 'Ошибка сервера. Пожалуйста, попробуйте позже';
+        } else {
+            userMessage = error.message;
+        }
+        
+        return { 
+            success: false, 
+            error: userMessage 
+        };
     }
 }
 
@@ -62,7 +112,7 @@ export async function loginUser(email, password) {
             .from('profiles')
             .select('*')
             .eq('id', data.user.id)
-            .single();
+            .maybeSingle();
         
         currentUser = {
             id: data.user.id,
@@ -73,7 +123,13 @@ export async function loginUser(email, password) {
         return { success: true, user: currentUser };
     } catch (error) {
         console.error('Ошибка входа:', error);
-        return { success: false, error: error.message };
+        
+        let userMessage = 'Неверный email или пароль';
+        if (error.message.includes('Email not confirmed')) {
+            userMessage = 'Подтвердите email перед входом. Проверьте почту!';
+        }
+        
+        return { success: false, error: userMessage };
     }
 }
 
@@ -106,7 +162,7 @@ export async function checkCurrentUser() {
             .from('profiles')
             .select('*')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
         
         currentUser = {
             id: user.id,
@@ -130,7 +186,7 @@ export function getCurrentUser() {
 export async function resetPassword(email) {
     try {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/reset-password.html'
+            redirectTo: window.location.origin
         });
         
         if (error) throw error;
