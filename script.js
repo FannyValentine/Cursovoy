@@ -9,6 +9,168 @@ import {
     resetPassword
 } from './auth.js';
 
+// ========== КОРЗИНА ==========
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+// Сохранение корзины
+function saveCart() {
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartBadge();
+    renderCartDropdown();
+}
+
+// Обновить значок корзины
+function updateCartBadge() {
+    const badge = document.querySelector('.cart-badge');
+    if (badge) {
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        badge.innerText = totalItems;
+        badge.style.display = totalItems > 0 ? 'flex' : 'none';
+    }
+}
+
+// Показать уведомление
+function showToast(title, message, type = 'success') {
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) existingToast.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-shopping-cart'}"></i>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close"><i class="fas fa-times"></i></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    toast.querySelector('.toast-close').addEventListener('click', () => toast.remove());
+    
+    setTimeout(() => {
+        if (toast && toast.remove) toast.remove();
+    }, 3000);
+}
+
+// Добавить в корзину
+function addToCart(book, type, price) {
+    const existingItem = cart.find(item => item.id === book.id && item.type === type);
+    
+    if (existingItem) {
+        existingItem.quantity++;
+        showToast('Корзина обновлена', `${book.title} (${type === 'rent' ? 'Аренда' : 'Покупка'}) добавлено еще раз`, 'success');
+    } else {
+        cart.push({
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            cover_image: book.cover_image,
+            type: type,
+            price: price,
+            quantity: 1
+        });
+        showToast('Добавлено в корзину', `${book.title} - ${type === 'rent' ? 'Аренда' : 'Покупка'} за ${price} ₽`, 'success');
+    }
+    
+    saveCart();
+}
+
+// Удалить из корзины
+function removeFromCart(itemId, type) {
+    cart = cart.filter(item => !(item.id === itemId && item.type === type));
+    saveCart();
+    showToast('Удалено из корзины', 'Товар удален из корзины', 'success');
+}
+
+// Отрисовать корзину
+function renderCartDropdown() {
+    const cartItemsContainer = document.getElementById('cartItems');
+    const cartTotalSpan = document.getElementById('cartTotal');
+    
+    if (!cartItemsContainer) return;
+    
+    if (cart.length === 0) {
+        cartItemsContainer.innerHTML = `
+            <div class="cart-empty">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Корзина пуста</p>
+                <small>Добавьте книги из каталога</small>
+            </div>
+        `;
+        if (cartTotalSpan) cartTotalSpan.textContent = '0 ₽';
+        return;
+    }
+    
+    let total = 0;
+    cartItemsContainer.innerHTML = cart.map(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        const typeText = item.type === 'rent' ? 'Аренда' : 'Покупка';
+        return `
+            <div class="cart-item">
+                <div class="cart-item-image">
+                    <img src="${item.cover_image || 'https://placehold.co/300x400/e2e8f0/1e3c3a?text=📖'}" 
+                         alt="${escapeHtml(item.title)}"
+                         onerror="this.src='https://placehold.co/300x400/e2e8f0/1e3c3a?text=📖'">
+                </div>
+                <div class="cart-item-details">
+                    <div class="cart-item-title">${escapeHtml(item.title)}</div>
+                    <div class="cart-item-author">${escapeHtml(item.author || 'Автор не указан')}</div>
+                    <div class="cart-item-price">
+                        ${item.price} ₽ × ${item.quantity}
+                        <span class="cart-item-type">${typeText}</span>
+                    </div>
+                </div>
+                <button class="cart-item-remove" data-id="${item.id}" data-type="${item.type}">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+    
+    if (cartTotalSpan) cartTotalSpan.textContent = total + ' ₽';
+    
+    document.querySelectorAll('.cart-item-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = parseInt(btn.dataset.id);
+            const type = btn.dataset.type;
+            removeFromCart(id, type);
+        });
+    });
+}
+
+// Переключение корзины
+function toggleCart() {
+    const dropdown = document.getElementById('cartDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+        renderCartDropdown();
+    }
+}
+
+// Оформление заказа
+async function checkout() {
+    if (cart.length === 0) {
+        showToast('Корзина пуста', 'Добавьте книги перед оформлением', 'error');
+        return;
+    }
+    
+    const user = getCurrentUser();
+    if (!user) {
+        showToast('Требуется авторизация', 'Войдите в аккаунт для оформления заказа', 'error');
+        setTimeout(() => openModal(), 1500);
+        return;
+    }
+    
+    showToast('Заказ оформлен', 'Спасибо за покупку!', 'success');
+    cart = [];
+    saveCart();
+    toggleCart();
+}
+
 // ========== ФУНКЦИИ РАБОТЫ С БАЗОЙ ДАННЫХ ==========
 async function loadBooksFromSupabase() {
     try {
@@ -76,23 +238,39 @@ function renderBooks(books) {
                 <div class="book-actions">
                     <span class="price">${book.purchase_price || book.price} ₽</span>
                     <div>
-                        <button class="rent-btn" data-id="${book.id}" data-title="${escapeHtml(book.title)}" data-price="${book.rent_price || book.rent}">Аренда ${book.rent_price || book.rent} ₽</button>
-                        <button class="buy-btn" data-id="${book.id}" data-title="${escapeHtml(book.title)}" data-price="${book.purchase_price || book.price}">Купить</button>
+                        <button class="rent-btn" data-id="${book.id}" data-title="${escapeHtml(book.title)}" data-author="${escapeHtml(book.author)}" data-cover="${book.cover_image || ''}" data-price="${book.rent_price || book.rent}">Аренда ${book.rent_price || book.rent} ₽</button>
+                        <button class="buy-btn" data-id="${book.id}" data-title="${escapeHtml(book.title)}" data-author="${escapeHtml(book.author)}" data-cover="${book.cover_image || ''}" data-price="${book.purchase_price || book.price}">Купить</button>
                     </div>
                 </div>
             </div>
         </div>
     `).join('');
     
-    // Обработчики для кнопок
-    document.querySelectorAll('.rent-btn, .buy-btn').forEach(btn => {
+    document.querySelectorAll('.rent-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const title = btn.getAttribute('data-title');
-            const price = btn.getAttribute('data-price');
-            const action = btn.classList.contains('rent-btn') ? 'аренду' : 'покупку';
-            alert(`✅ Книга "${title}" добавлена для ${action} за ${price} ₽`);
-            updateCartBadge();
+            const book = {
+                id: parseInt(btn.dataset.id),
+                title: btn.dataset.title,
+                author: btn.dataset.author,
+                cover_image: btn.dataset.cover
+            };
+            const price = parseInt(btn.dataset.price);
+            addToCart(book, 'rent', price);
+        });
+    });
+    
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const book = {
+                id: parseInt(btn.dataset.id),
+                title: btn.dataset.title,
+                author: btn.dataset.author,
+                cover_image: btn.dataset.cover
+            };
+            const price = parseInt(btn.dataset.price);
+            addToCart(book, 'buy', price);
         });
     });
 }
@@ -106,14 +284,6 @@ function escapeHtml(str) {
         if (m === '>') return '&gt;';
         return m;
     });
-}
-
-function updateCartBadge() {
-    const badge = document.querySelector('.cart-badge');
-    if (badge) {
-        let current = parseInt(badge.innerText) || 0;
-        badge.innerText = current + 1;
-    }
 }
 
 function setupSearch() {
@@ -183,7 +353,6 @@ function mobileMenu() {
 
 // ========== УПРАВЛЕНИЕ АВТОРИЗАЦИЕЙ ==========
 
-// Элементы модального окна
 const modal = document.getElementById('authModal');
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
@@ -191,7 +360,6 @@ const resetForm = document.getElementById('resetForm');
 const modalTitle = document.getElementById('modalTitle');
 const authMessage = document.getElementById('authMessage');
 
-// Открыть модальное окно
 function openModal() {
     if (modal) {
         modal.style.display = 'block';
@@ -199,7 +367,6 @@ function openModal() {
     }
 }
 
-// Закрыть модальное окно
 function closeModal() {
     if (modal) {
         modal.style.display = 'none';
@@ -207,7 +374,6 @@ function closeModal() {
     }
 }
 
-// Показать форму входа
 function showLoginForm() {
     if (loginForm) loginForm.style.display = 'block';
     if (registerForm) registerForm.style.display = 'none';
@@ -216,7 +382,6 @@ function showLoginForm() {
     clearAuthMessage();
 }
 
-// Показать форму регистрации
 function showRegisterForm() {
     if (loginForm) loginForm.style.display = 'none';
     if (registerForm) registerForm.style.display = 'block';
@@ -225,7 +390,6 @@ function showRegisterForm() {
     clearAuthMessage();
 }
 
-// Показать форму сброса пароля
 function showResetForm() {
     if (loginForm) loginForm.style.display = 'none';
     if (registerForm) registerForm.style.display = 'none';
@@ -234,7 +398,6 @@ function showResetForm() {
     clearAuthMessage();
 }
 
-// Показать сообщение
 function showAuthMessage(text, isError = true) {
     if (authMessage) {
         authMessage.textContent = text;
@@ -256,7 +419,6 @@ function clearAuthMessage() {
     }
 }
 
-// Обновить UI после входа
 async function updateUserUI() {
     const user = getCurrentUser();
     const authButtons = document.getElementById('authButtons');
@@ -265,7 +427,6 @@ async function updateUserUI() {
     const userName = document.getElementById('userName');
     
     if (user) {
-        // Пользователь вошел
         if (authButtons) authButtons.style.display = 'none';
         if (userMenuContainer && userMenu) {
             userMenuContainer.appendChild(userMenu);
@@ -273,13 +434,11 @@ async function updateUserUI() {
             if (userName) userName.textContent = user.username || user.email?.split('@')[0] || 'Пользователь';
         }
     } else {
-        // Пользователь вышел
         if (authButtons) authButtons.style.display = 'block';
         if (userMenu) userMenu.style.display = 'none';
     }
 }
 
-// Обработчик регистрации
 async function handleRegister() {
     const username = document.getElementById('regUsername')?.value;
     const email = document.getElementById('regEmail')?.value;
@@ -313,7 +472,6 @@ async function handleRegister() {
     }
 }
 
-// Обработчик входа
 async function handleLogin() {
     const email = document.getElementById('loginEmail')?.value;
     const password = document.getElementById('loginPassword')?.value;
@@ -330,7 +488,6 @@ async function handleLogin() {
         setTimeout(() => {
             closeModal();
             updateUserUI();
-            // Перезагружаем книги
             loadBooksFromSupabase().then(renderBooks);
         }, 1500);
     } else {
@@ -338,20 +495,19 @@ async function handleLogin() {
     }
 }
 
-// Обработчик выхода
 async function handleLogout() {
     const result = await logoutUser();
     if (result.success) {
-        alert('Вы вышли из аккаунта');
+        showToast('Выход из аккаунта', 'Вы успешно вышли', 'success');
         updateUserUI();
-        // Перезагружаем книги
         loadBooksFromSupabase().then(renderBooks);
+        cart = [];
+        saveCart();
     } else {
         alert('Ошибка выхода: ' + result.error);
     }
 }
 
-// Обработчик сброса пароля
 async function handleResetPassword() {
     const email = document.getElementById('resetEmail')?.value;
     
@@ -374,22 +530,17 @@ async function handleResetPassword() {
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 
-// Настройка обработчиков событий
 function setupAuth() {
-    // Кнопки открытия модального окна
     const openModalBtn = document.getElementById('openLoginModal');
     if (openModalBtn) openModalBtn.addEventListener('click', openModal);
     
-    // Закрытие модального окна
     const closeBtn = document.querySelector('.modal-close');
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
     
-    // Клик вне модального окна
     window.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
     });
     
-    // Переключение между формами
     const switchToRegister = document.getElementById('switchToRegister');
     const switchToLogin = document.getElementById('switchToLogin');
     const forgotPassword = document.getElementById('forgotPassword');
@@ -415,7 +566,6 @@ function setupAuth() {
         showLoginForm();
     });
     
-    // Кнопки действий
     const registerBtn = document.getElementById('registerBtn');
     const loginBtn = document.getElementById('loginBtn');
     const resetBtn = document.getElementById('resetBtn');
@@ -426,7 +576,6 @@ function setupAuth() {
     if (resetBtn) resetBtn.addEventListener('click', handleResetPassword);
     if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
     
-    // Enter для отправки форм
     const inputs = document.querySelectorAll('.auth-form input');
     inputs.forEach(input => {
         input.addEventListener('keypress', (e) => {
@@ -439,18 +588,15 @@ function setupAuth() {
     });
 }
 
-// ========== ЗАПУСК ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ==========
+// ========== ЗАПУСК ==========
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Страница загружена, инициализация...');
     
-    // Настройка авторизации
     setupAuth();
     
-    // Проверяем текущего пользователя
     await checkCurrentUser();
     await updateUserUI();
     
-    // Загружаем книги
     const booksContainer = document.getElementById('booksGrid');
     if (booksContainer) {
         booksContainer.innerHTML = '<div style="text-align: center; padding: 40px;">📚 Загрузка книг...</div>';
@@ -466,13 +612,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // Настройка поиска и меню
     setupSearch();
     mobileMenu();
     
-    // Корзина
     const cartBtn = document.querySelector('.cart-btn');
     if (cartBtn) {
-        cartBtn.addEventListener('click', () => alert('🛒 Корзина: пока пуста. Добавьте книгу!'));
+        cartBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleCart();
+        });
     }
+    
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('cartDropdown');
+        const cartButton = document.querySelector('.cart-btn');
+        if (dropdown && cartButton && !cartButton.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (checkoutBtn) checkoutBtn.addEventListener('click', checkout);
+    
+    updateCartBadge();
 });
