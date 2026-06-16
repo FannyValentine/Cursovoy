@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Ebook — Покупка и аренда книг</title>
+    <title>Каталог книг — Ebook</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="catalog.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -16,8 +17,8 @@
                 <span>Ebook</span>
             </div>
             <nav class="nav">
-                <a href="index.html" class="nav-link active">Главная</a>
-                <a href="catalog.html" class="nav-link">Каталог</a>
+                <a href="index.html" class="nav-link">Главная</a>
+                <a href="catalog.html" class="nav-link active">Каталог</a>
                 <a href="#" class="nav-link">Аренда</a>
                 <a href="#" class="nav-link">Избранное</a>
             </nav>
@@ -64,114 +65,96 @@
     </header>
 
     <main>
-        <section class="hero">
-            <div class="container hero-container">
-                <div class="hero-content">
-                    <h1>Книги без границ</h1>
-                    <p>Покупайте или арендуйте электронные книги в один клик. Тысячи произведений на любой вкус — всегда с вами.</p>
-                    <div class="hero-buttons">
-                        <button class="btn-primary">Начать чтение <i class="fas fa-arrow-right"></i></button>
-                        <button class="btn-secondary">Каталог <i class="fas fa-list-ul"></i></button>
+        <!-- Хлебные крошки -->
+        <div class="breadcrumbs">
+            <div class="container">
+                <a href="index.html">Главная</a>
+                <span>/</span>
+                <span class="current">Каталог</span>
+            </div>
+        </div>
+
+        <!-- Заголовок каталога -->
+        <section class="catalog-header">
+            <div class="container">
+                <h1>Каталог книг</h1>
+                <p>Выберите книгу для покупки или аренды</p>
+            </div>
+        </section>
+
+        <!-- Фильтры -->
+        <section class="filters-section">
+            <div class="container">
+                <div class="filters-wrapper">
+                    <div class="filter-group">
+                        <label for="genreFilter">Жанр</label>
+                        <select id="genreFilter">
+                            <option value="all">Все жанры</option>
+                            <option value="классика">Классика</option>
+                            <option value="фантастика">Фантастика</option>
+                            <option value="бизнес">Бизнес-литература</option>
+                            <option value="приключения">Приключения</option>
+                            <option value="философия">Философия</option>
+                            <option value="психология">Психология</option>
+                            <option value="финансы">Финансы</option>
+                        </select>
                     </div>
-                    <div class="stats">
-                        <div><span>5000+</span> книг</div>
-                        <div><span>200+</span> авторов</div>
-                        <div><span>98%</span> довольных читателей</div>
+
+                    <div class="filter-group">
+                        <label for="sortFilter">Сортировка</label>
+                        <select id="sortFilter">
+                            <option value="popular">По популярности</option>
+                            <option value="price_asc">Сначала дешёвые</option>
+                            <option value="price_desc">Сначала дорогие</option>
+                            <option value="title">По названию</option>
+                            <option value="new">Сначала новые</option>
+                        </select>
                     </div>
-                </div>
-                <div class="hero-image">
-                    <img src="img/logo.png">
+
+                    <div class="filter-group price-filter">
+                        <label>Цена</label>
+                        <div class="price-inputs">
+                            <input type="number" id="priceMin" placeholder="От" min="0">
+                            <span>—</span>
+                            <input type="number" id="priceMax" placeholder="До" min="0">
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Тип</label>
+                        <div class="type-filters">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="filterBuy" checked>
+                                Покупка
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="filterRent" checked>
+                                Аренда
+                            </label>
+                        </div>
+                    </div>
+
+                    <button id="applyFiltersBtn" class="btn-primary">Применить</button>
+                    <button id="resetFiltersBtn" class="btn-outline">Сбросить</button>
                 </div>
             </div>
         </section>
 
-        <section class="features">
+        <!-- Результаты -->
+        <section class="catalog-results">
             <div class="container">
-                <div class="section-header">
-                    <h2>Почему Ebook?</h2>
-                    <p>Всё для комфортного чтения и выгодных покупок</p>
-                </div>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <i class="fas fa-shopping-cart"></i>
-                        <h3>Покупка навсегда</h3>
-                        <p>Приобретайте книги и оставайтесь с ними навсегда в вашей личной библиотеке.</p>
+                <div class="results-header">
+                    <span id="resultsCount">Загрузка...</span>
+                    <div class="view-options">
+                        <button class="view-btn active" data-view="grid"><i class="fas fa-th"></i></button>
+                        <button class="view-btn" data-view="list"><i class="fas fa-list"></i></button>
                     </div>
-                    <div class="feature-card">
-                        <i class="fas fa-calendar-alt"></i>
-                        <h3>Гибкая аренда</h3>
-                        <p>Аренда от 7 до 30 дней. Продлите, если не успели дочитать.</p>
-                    </div>
-                    <div class="feature-card">
-                        <i class="fas fa-glasses"></i>
-                        <h3>Удобный ридер</h3>
-                        <p>Встроенный ридер с настройками шрифта, фона и ночным режимом.</p>
-                    </div>
-                    <div class="feature-card">
-                        <i class="fas fa-sync-alt"></i>
-                        <h3>Кроссплатформенность</h3>
-                        <p>Читайте на телефоне, планшете или компьютере. Прогресс синхронизируется.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="catalog-preview">
-            <div class="container">
-                <div class="section-header">
-                    <h2>Популярные книги</h2>
-                    <p>Выбор читателей в этом месяце</p>
                 </div>
                 <div class="books-grid" id="booksGrid">
                     <!-- Книги будут подгружены через JS -->
                 </div>
-                <div class="catalog-footer" style="text-align: center; margin-top: 40px;">
-                    <button class="btn-outline">Смотреть весь каталог <i class="fas fa-chevron-right"></i></button>
-                </div>
-            </div>
-        </section>
-
-        <section class="rent-cta">
-            <div class="container rent-container">
-                <div class="rent-content">
-                    <span class="rent-badge">Экономьте до 70%</span>
-                    <h2>Аренда книг — выгодно</h2>
-                    <p>Не уверены, что книга вам понравится? Возьмите в аренду по цене чашки кофе. А если полюбите — выкупите с вычетом арендной платы.</p>
-                    <ul class="rent-list">
-                        <li><i class="fas fa-check-circle"></i> 7 дней — 99 ₽</li>
-                        <li><i class="fas fa-check-circle"></i> 14 дней — 169 ₽</li>
-                        <li><i class="fas fa-check-circle"></i> 30 дней — 299 ₽</li>
-                    </ul>
-                    <button class="btn-primary">Выбрать книгу в аренду</button>
-                </div>
-                <div class="rent-image">
-                    <img src="img/logo_rent.png">
-                </div>
-            </div>
-        </section>
-
-        <section class="testimonials">
-            <div class="container">
-                <div class="section-header">
-                    <h2>Читатели о нас</h2>
-                    <p>Более 10 000 отзывов</p>
-                </div>
-                <div class="testimonial-slider">
-                    <div class="testimonial-card">
-                        <div class="rating">★★★★★</div>
-                        <p>"Очень удобно, что можно сначала арендовать. Так я открыла для себя несколько новых авторов. Интерфейс приятный."</p>
-                        <div class="author">— Анна К.</div>
-                    </div>
-                    <div class="testimonial-card">
-                        <div class="rating">★★★★★</div>
-                        <p>"Большой выбор технической литературы в аренде. Для самообразования — идеально. Спасибо Ebook!"</p>
-                        <div class="author">— Дмитрий В.</div>
-                    </div>
-                    <div class="testimonial-card">
-                        <div class="rating">★★★★☆</div>
-                        <p>"Хотелось бы больше книг на английском. Но в целом сервис отличный, читаю каждый день."</p>
-                        <div class="author">— Ольга М.</div>
-                    </div>
+                <div id="pagination" class="pagination">
+                    <!-- Пагинация -->
                 </div>
             </div>
         </section>
@@ -180,13 +163,6 @@
     <footer class="footer">
         <div class="container footer-container">
             <div class="footer-col">
-                <h4>Помощь</h4>
-                    <ul>
-                        <li><a href="faq.html#how-to-rent">Как арендовать</a></li>
-                        <li><a href="faq.html#qa">Вопросы и ответы</a></li>
-                        <li><a href="faq.html#rules">Правила сервиса</a></li>
-                        <li><a href="faq.html#support">Поддержка</a></li>
-                    </ul>
                 <div class="logo"><i class="fas fa-book-open"></i> Ebook</div>
                 <p>Ваша цифровая библиотека. Покупайте, арендуйте, читайте где угодно.</p>
                 <div class="socials">
@@ -303,6 +279,6 @@
         </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script type="module" src="catalog.js"></script>
 </body>
 </html>

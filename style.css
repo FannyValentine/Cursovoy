@@ -1049,4 +1049,35 @@ h2 {
         right: 16px;
         max-width: calc(100% - 32px);
     }
+    /* ========== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ КАТАЛОГА ========== */
+.book-description {
+    font-size: 0.85rem;
+    color: #5a6e7c;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    flex-grow: 1;
+}
+
+.book-genre {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(30, 60, 58, 0.85);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.book-cover {
+    position: relative;
+}
+
+.catalog-footer {
+    text-align: center;
+    margin-top: 40px;
+}
 }
