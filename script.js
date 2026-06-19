@@ -230,6 +230,7 @@ function renderBooks(books) {
                 <img src="${book.cover_image || 'https://placehold.co/300x400/e2e8f0/1e3c3a?text=📖+No+Cover'}" 
                      alt="${book.title}" 
                      onerror="this.src='https://placehold.co/300x400/e2e8f0/1e3c3a?text=📖+No+Cover'">
+                <!-- Удалена строка с отображением жанра -->
             </div>
             <div class="book-info">
                 <div class="book-title">${escapeHtml(book.title)}</div>
@@ -246,35 +247,18 @@ function renderBooks(books) {
         </div>
     `).join('');
     
-    document.querySelectorAll('.rent-btn').forEach(btn => {
+    // Обработчики для кнопок
+    document.querySelectorAll('.rent-btn, .buy-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const book = {
-                id: parseInt(btn.dataset.id),
-                title: btn.dataset.title,
-                author: btn.dataset.author,
-                cover_image: btn.dataset.cover
-            };
-            const price = parseInt(btn.dataset.price);
-            addToCart(book, 'rent', price);
-        });
-    });
-    
-    document.querySelectorAll('.buy-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const book = {
-                id: parseInt(btn.dataset.id),
-                title: btn.dataset.title,
-                author: btn.dataset.author,
-                cover_image: btn.dataset.cover
-            };
-            const price = parseInt(btn.dataset.price);
-            addToCart(book, 'buy', price);
+            const title = btn.getAttribute('data-title');
+            const price = btn.getAttribute('data-price');
+            const action = btn.classList.contains('rent-btn') ? 'аренду' : 'покупку';
+            alert(`✅ Книга "${title}" добавлена для ${action} за ${price} ₽`);
+            updateCartBadge();
         });
     });
 }
-
 // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 function escapeHtml(str) {
     if (!str) return '';

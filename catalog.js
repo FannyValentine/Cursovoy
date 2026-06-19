@@ -13,7 +13,7 @@ import {
 let allBooks = [];
 let filteredBooks = [];
 let currentPage = 1;
-const booksPerPage = 12;
+const booksPerPage = 10;
 let currentView = 'grid';
 
 // ========== КОРЗИНА ==========
@@ -112,9 +112,9 @@ function renderCartDropdown() {
         return `
             <div class="cart-item">
                 <div class="cart-item-image">
-                    <img src="${item.cover_image || 'https://placehold.co/300x400/e2e8f0/1e3c3a?text=📖'}" 
+                    <img src="${item.cover_image || 'https://placehold.co/300x400/e2e8f0/1e3c3a'}" 
                          alt="${escapeHtml(item.title)}"
-                         onerror="this.src='https://placehold.co/300x400/e2e8f0/1e3c3a?text=📖'">
+                         onerror="this.src='https://placehold.co/300x400/e2e8f0/1e3c3a'">
                 </div>
                 <div class="cart-item-details">
                     <div class="cart-item-title">${escapeHtml(item.title)}</div>
@@ -268,7 +268,7 @@ function renderBooks() {
                 <img src="${book.cover_image || 'https://placehold.co/300x400/e2e8f0/1e3c3a?text=📖+No+Cover'}" 
                      alt="${book.title}" 
                      onerror="this.src='https://placehold.co/300x400/e2e8f0/1e3c3a?text=📖+No+Cover'">
-                ${book.genre ? `<div class="book-genre">${book.genre}</div>` : ''}
+                <!-- Удалена строка с отображением жанра -->
             </div>
             <div class="book-info">
                 <div class="book-title">${escapeHtml(book.title)}</div>
