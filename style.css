@@ -1049,6 +1049,7 @@ h2 {
         right: 16px;
         max-width: calc(100% - 32px);
     }
+}
     /* ========== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ КАТАЛОГА ========== */
 .book-description {
     font-size: 0.85rem;
@@ -1314,124 +1315,6 @@ h2 {
     .favorite-btn.active {
         color: #f4a460;
         background: rgba(244, 164, 96, 0.15);
-    }
-}
-/* ========== ОБНОВЛЕННАЯ КАРТОЧКА КНИГИ ========== */
-.book-info {
-    padding: 18px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.book-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 4px;
-}
-
-.book-title {
-    font-weight: 700;
-    font-size: 1.1rem;
-    line-height: 1.3;
-    flex: 1;
-}
-
-/* ========== КНОПКА ИЗБРАННОГО В КАРТОЧКЕ ========== */
-.favorite-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.1rem;
-    color: #cbd5e1;
-    transition: all 0.25s ease;
-    padding: 4px;
-    flex-shrink: 0;
-    margin-top: -2px;
-}
-
-.favorite-btn:hover {
-    transform: scale(1.15);
-    color: #e67e22;
-}
-
-.favorite-btn:active {
-    transform: scale(0.9);
-}
-
-.favorite-btn.active {
-    color: #e67e22;
-}
-
-.favorite-btn.active:hover {
-    transform: scale(1.15);
-    color: #e67e22;
-}
-
-.favorite-btn i {
-    transition: all 0.3s ease;
-    pointer-events: none;
-}
-
-.favorite-btn.active i {
-    animation: heartPop 0.35s ease;
-}
-
-.favorite-btn:not(.active) i {
-    font-weight: 400;
-}
-
-.favorite-btn.active i {
-    font-weight: 900;
-}
-
-/* Анимация сердечка */
-@keyframes heartPop {
-    0% {
-        transform: scale(1);
-    }
-    30% {
-        transform: scale(1.4);
-        color: #e67e22;
-    }
-    50% {
-        transform: scale(0.85);
-    }
-    70% {
-        transform: scale(1.15);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
-/* Убираем старые стили кнопки на обложке */
-.book-cover .favorite-btn {
-    display: none;
-}
-
-/* Обновленный book-cover */
-.book-cover {
-    position: relative;
-    height: 260px;
-    background: #eef2f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-/* Адаптив для мобильных */
-@media (max-width: 768px) {
-    .favorite-btn {
-        font-size: 0.95rem;
-        padding: 2px;
-    }
-    
-    .book-header {
-        gap: 8px;
     }
 }
 }
