@@ -171,45 +171,24 @@ async function checkout() {
     toggleCart();
 }
 
-// ========== ФУНКЦИИ РАБОТЫ С БАЗОЙ ДАННЫХ ==========
-async function loadBooksFromSupabase() {
+// ========== ЗАГРУЗКА ПОПУЛЯРНЫХ КНИГ (ГЛАВНАЯ СТРАНИЦА) ==========
+async function loadPopularBooks() {
     try {
         const { data: books, error } = await supabase
-            .from('books')
-            .select('*');
+            .from('popular_books')
+            .select('*')
+            .eq('is_active', true)
+            .order('display_order', { ascending: true });
         
         if (error) {
-            console.error('Ошибка загрузки:', error);
+            console.error('Ошибка загрузки популярных книг:', error);
             return [];
         }
         
-        console.log(`✅ Загружено ${books.length} книг`);
+        console.log(`✅ Загружено ${books.length} популярных книг`);
         return books || [];
     } catch (error) {
         console.error('Ошибка подключения:', error);
-        return [];
-    }
-}
-
-async function searchBooksInSupabase(query) {
-    if (!query || query.length < 2) {
-        return await loadBooksFromSupabase();
-    }
-    
-    try {
-        const { data: books, error } = await supabase
-            .from('books')
-            .select('*')
-            .or(`title.ilike.%${query}%,author.ilike.%${query}%`);
-        
-        if (error) {
-            console.error('Ошибка поиска:', error);
-            return [];
-        }
-        
-        return books || [];
-    } catch (error) {
-        console.error('Ошибка:', error);
         return [];
     }
 }
@@ -420,9 +399,16 @@ function setupSearch() {
         searchInput.addEventListener('input', async (e) => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(async () => {
-                const query = e.target.value;
-                const books = await searchBooksInSupabase(query);
-                renderBooks(books);
+                const query = e.target.value.toLowerCase();
+                if (query.length === 0) {
+                    renderBooks(allBooks);
+                } else {
+                    const filtered = allBooks.filter(book => 
+                        book.title.toLowerCase().includes(query) || 
+                        book.author.toLowerCase().includes(query)
+                    );
+                    renderBooks(filtered);
+                }
             }, 500);
         });
     }
@@ -604,7 +590,7 @@ async function handleLogin() {
             closeModal();
             await updateUserUI();
             await loadFavorites();
-            const books = await loadBooksFromSupabase();
+            const books = await loadPopularBooks();
             renderBooks(books);
         }, 1500);
     } else {
@@ -618,7 +604,7 @@ async function handleLogout() {
         showToast('Выход из аккаунта', 'Вы успешно вышли', 'success');
         await updateUserUI();
         favorites = [];
-        const books = await loadBooksFromSupabase();
+        const books = await loadPopularBooks();
         renderBooks(books);
         cart = [];
         saveCart();
@@ -717,11 +703,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const booksContainer = document.getElementById('booksGrid');
     if (booksContainer) {
-        booksContainer.innerHTML = '<div style="text-align: center; padding: 40px;">📚 Загрузка книг...</div>';
+        booksContainer.innerHTML = '<div style="text-align: center; padding: 40px;">📚 Загрузка популярных книг...</div>';
     }
     
     try {
-        const books = await loadBooksFromSupabase();
+        const books = await loadPopularBooks();
         renderBooks(books);
     } catch (error) {
         console.error('Ошибка при загрузке книг:', error);
