@@ -1062,4 +1062,376 @@ h2 {
     text-align: center;
     margin-top: 40px;
 }
+/* ========== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ ИЗБРАННОГО ========== */
+.favorite-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    z-index: 10;
+}
+
+.favorite-btn:hover {
+    transform: scale(1.1);
+    background: white;
+}
+
+.favorite-btn.active {
+    color: #e67e22;
+    background: rgba(230, 126, 34, 0.1);
+}
+
+.favorite-btn i {
+    transition: 0.2s;
+}
+
+.favorite-btn.active i {
+    animation: heartPop 0.3s ease;
+}
+
+@keyframes heartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.book-cover {
+    position: relative;
+}
+
+/* ========== АДАПТИВ ========== */
+@media (max-width: 768px) {
+    .favorite-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+        top: 8px;
+        right: 8px;
+    }
+}
+/* ========== КНОПКА ИЗБРАННОГО ========== */
+.favorite-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    border: none;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #cbd5e1;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    z-index: 10;
+    backdrop-filter: blur(4px);
+}
+
+.favorite-btn:hover {
+    transform: scale(1.12);
+    background: white;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.favorite-btn:active {
+    transform: scale(0.92);
+}
+
+.favorite-btn.active {
+    color: #e67e22;
+    background: rgba(230, 126, 34, 0.12);
+    box-shadow: 0 2px 16px rgba(230, 126, 34, 0.2);
+}
+
+.favorite-btn.active:hover {
+    background: rgba(230, 126, 34, 0.18);
+    box-shadow: 0 4px 24px rgba(230, 126, 34, 0.25);
+}
+
+.favorite-btn i {
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.favorite-btn.active i {
+    animation: heartPop 0.35s ease;
+}
+
+.favorite-btn:not(.active) i {
+    font-weight: 400;
+}
+
+.favorite-btn.active i {
+    font-weight: 900;
+}
+
+/* Анимация сердечка при добавлении в избранное */
+@keyframes heartPop {
+    0% {
+        transform: scale(1);
+    }
+    30% {
+        transform: scale(1.4);
+        color: #e67e22;
+    }
+    50% {
+        transform: scale(0.85);
+    }
+    70% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Анимация пульсации для десктопа */
+@keyframes heartPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.3);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(230, 126, 34, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(230, 126, 34, 0);
+    }
+}
+
+.favorite-btn.active.pulse {
+    animation: heartPulse 1s ease;
+}
+
+/* Позиционирование обложки для кнопки */
+.book-cover {
+    position: relative;
+}
+
+/* Адаптив для мобильных устройств */
+@media (max-width: 768px) {
+    .favorite-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+        top: 8px;
+        right: 8px;
+    }
+}
+
+/* Для touch-устройств увеличиваем область касания */
+@media (hover: none) and (pointer: coarse) {
+    .favorite-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+        top: 6px;
+        right: 6px;
+    }
+    
+    .favorite-btn::after {
+        content: '';
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        bottom: -8px;
+        left: -8px;
+        border-radius: 50%;
+    }
+}
+
+/* Состояние загрузки (опционально) */
+.favorite-btn.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.favorite-btn.loading i {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Тень при наведении на карточку */
+.book-card:hover .favorite-btn {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Стиль для кнопки в избранном на отдельной странице */
+.favorites-page .favorite-btn {
+    color: #e67e22;
+    background: rgba(230, 126, 34, 0.12);
+    box-shadow: 0 2px 16px rgba(230, 126, 34, 0.2);
+}
+
+.favorites-page .favorite-btn:hover {
+    background: rgba(230, 126, 34, 0.2);
+    box-shadow: 0 4px 24px rgba(230, 126, 34, 0.25);
+}
+
+/* Улучшенная тень для карточки с избранным */
+.book-card.has-favorite {
+    box-shadow: 0 10px 30px rgba(230, 126, 34, 0.05);
+}
+
+.book-card.has-favorite:hover {
+    box-shadow: 0 20px 40px rgba(230, 126, 34, 0.08);
+}
+
+/* Для поддержки темной темы (если добавится позже) */
+@media (prefers-color-scheme: dark) {
+    .favorite-btn {
+        background: rgba(30, 44, 42, 0.85);
+        color: #94a3b8;
+    }
+    
+    .favorite-btn:hover {
+        background: rgba(30, 44, 42, 0.95);
+    }
+    
+    .favorite-btn.active {
+        color: #f4a460;
+        background: rgba(244, 164, 96, 0.15);
+    }
+}
+/* ========== ОБНОВЛЕННАЯ КАРТОЧКА КНИГИ ========== */
+.book-info {
+    padding: 18px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.book-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.book-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    line-height: 1.3;
+    flex: 1;
+}
+
+/* ========== КНОПКА ИЗБРАННОГО В КАРТОЧКЕ ========== */
+.favorite-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: #cbd5e1;
+    transition: all 0.25s ease;
+    padding: 4px;
+    flex-shrink: 0;
+    margin-top: -2px;
+}
+
+.favorite-btn:hover {
+    transform: scale(1.15);
+    color: #e67e22;
+}
+
+.favorite-btn:active {
+    transform: scale(0.9);
+}
+
+.favorite-btn.active {
+    color: #e67e22;
+}
+
+.favorite-btn.active:hover {
+    transform: scale(1.15);
+    color: #e67e22;
+}
+
+.favorite-btn i {
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.favorite-btn.active i {
+    animation: heartPop 0.35s ease;
+}
+
+.favorite-btn:not(.active) i {
+    font-weight: 400;
+}
+
+.favorite-btn.active i {
+    font-weight: 900;
+}
+
+/* Анимация сердечка */
+@keyframes heartPop {
+    0% {
+        transform: scale(1);
+    }
+    30% {
+        transform: scale(1.4);
+        color: #e67e22;
+    }
+    50% {
+        transform: scale(0.85);
+    }
+    70% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Убираем старые стили кнопки на обложке */
+.book-cover .favorite-btn {
+    display: none;
+}
+
+/* Обновленный book-cover */
+.book-cover {
+    position: relative;
+    height: 260px;
+    background: #eef2f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Адаптив для мобильных */
+@media (max-width: 768px) {
+    .favorite-btn {
+        font-size: 0.95rem;
+        padding: 2px;
+    }
+    
+    .book-header {
+        gap: 8px;
+    }
+}
 }

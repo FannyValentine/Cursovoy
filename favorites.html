@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Каталог книг — Ebook</title>
+    <title>Избранное — Ebook</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="catalog.css">
+    <link rel="stylesheet" href="favorites.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -18,9 +18,9 @@
             </div>
             <nav class="nav">
                 <a href="index.html" class="nav-link">Главная</a>
-                <a href="catalog.html" class="nav-link active">Каталог</a>
+                <a href="catalog.html" class="nav-link">Каталог</a>
                 <a href="#" class="nav-link">Аренда</a>
-                <a href="favorites.html" class="nav-link">Избранное</a>
+                <a href="favorites.html" class="nav-link active">Избранное</a>
             </nav>
             <div class="header-actions">
                 <button class="icon-btn" id="searchToggle"><i class="fas fa-search"></i></button>
@@ -58,7 +58,7 @@
         </div>
         <div class="search-bar" id="searchBar">
             <div class="container">
-                <input type="text" placeholder="Поиск книг, авторов, жанров..." id="searchInput">
+                <input type="text" placeholder="Поиск в избранном..." id="searchInput">
                 <button><i class="fas fa-search"></i></button>
             </div>
         </div>
@@ -70,91 +70,32 @@
             <div class="container">
                 <a href="index.html">Главная</a>
                 <span>/</span>
-                <span class="current">Каталог</span>
+                <span class="current">Избранное</span>
             </div>
         </div>
 
-        <!-- Заголовок каталога -->
-        <section class="catalog-header">
+        <!-- Заголовок -->
+        <section class="favorites-header">
             <div class="container">
-                <h1>Каталог книг</h1>
-                <p>Выберите книгу для покупки или аренды</p>
-            </div>
-        </section>
-
-        <!-- Фильтры -->
-        <section class="filters-section">
-            <div class="container">
-                <div class="filters-wrapper">
-                    <div class="filter-group">
-                        <label for="genreFilter">Жанр</label>
-                        <select id="genreFilter">
-                            <option value="all">Все жанры</option>
-                            <option value="классика">Классика</option>
-                            <option value="фантастика">Фантастика</option>
-                            <option value="бизнес">Бизнес-литература</option>
-                            <option value="приключения">Приключения</option>
-                            <option value="философия">Философия</option>
-                            <option value="психология">Психология</option>
-                            <option value="финансы">Финансы</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="sortFilter">Сортировка</label>
-                        <select id="sortFilter">
-                            <option value="popular">По популярности</option>
-                            <option value="price_asc">Сначала дешёвые</option>
-                            <option value="price_desc">Сначала дорогие</option>
-                            <option value="title">По названию</option>
-                            <option value="new">Сначала новые</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group price-filter">
-                        <label>Цена</label>
-                        <div class="price-inputs">
-                            <input type="number" id="priceMin" placeholder="От" min="0">
-                            <span>—</span>
-                            <input type="number" id="priceMax" placeholder="До" min="0">
-                        </div>
-                    </div>
-
-                    <div class="filter-group">
-                        <label>Тип</label>
-                        <div class="type-filters">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="filterBuy" checked>
-                                Покупка
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="filterRent" checked>
-                                Аренда
-                            </label>
-                        </div>
-                    </div>
-
-                    <button id="applyFiltersBtn" class="btn-primary">Применить</button>
-                    <button id="resetFiltersBtn" class="btn-outline">Сбросить</button>
-                </div>
+                <h1><i class="fas fa-heart" style="color: #e67e22;"></i> Избранное</h1>
+                <p>Книги, которые вы отметили</p>
             </div>
         </section>
 
         <!-- Результаты -->
-        <section class="catalog-results">
+        <section class="favorites-results">
             <div class="container">
                 <div class="results-header">
                     <span id="resultsCount">Загрузка...</span>
-                    <div class="view-options">
-                        <button class="view-btn active" data-view="grid"><i class="fas fa-th"></i></button>
-                        <button class="view-btn" data-view="list"><i class="fas fa-list"></i></button>
-                    </div>
                 </div>
                 <div class="books-grid" id="booksGrid">
                     <!-- Книги будут подгружены через JS -->
                 </div>
-                <div id="pagination" class="pagination">
-                    <!-- Пагинация -->
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <i class="fas fa-heart" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 20px; display: block;"></i>
+                    <h2>У вас пока нет избранных книг</h2>
+                    <p>Перейдите в каталог и добавьте книги, которые вам понравились</p>
+                    <a href="catalog.html" class="btn-primary" style="margin-top: 16px;">Перейти в каталог</a>
                 </div>
             </div>
         </section>
@@ -275,10 +216,11 @@
         <div class="user-dropdown">
             <a href="#" id="userProfileBtn"><i class="fas fa-user"></i> Профиль</a>
             <a href="#" id="userOrdersBtn"><i class="fas fa-book"></i> Мои книги</a>
+            <a href="favorites.html"><i class="fas fa-heart"></i> Избранное</a>
             <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти</a>
         </div>
     </div>
 
-    <script type="module" src="catalog.js"></script>
+    <script type="module" src="favorites.js"></script>
 </body>
 </html>

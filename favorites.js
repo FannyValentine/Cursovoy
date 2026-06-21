@@ -1,4 +1,4 @@
-// catalog.js
+// favorites.js
 import { supabase } from './supabase.js';
 import { 
     registerUser, 
@@ -10,12 +10,10 @@ import {
 } from './auth.js';
 
 // ========== СОСТОЯНИЕ ==========
+let favorites = [];
 let allBooks = [];
 let filteredBooks = [];
-let currentPage = 1;
-const booksPerPage = 15;
-let currentView = 'grid';
-let favorites = [];
+let currentUser = null;
 
 // ========== КОРЗИНА ==========
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -171,27 +169,9 @@ async function checkout() {
     toggleCart();
 }
 
-// ========== ЗАГРУЗКА КНИГ ==========
-async function loadBooksFromSupabase() {
-    try {
-        const { data: books, error } = await supabase
-            .from('books')
-            .select('*');
-        
-        if (error) {
-            console.error('Ошибка загрузки:', error);
-            return [];
-        }
-        
-        console.log(`✅ Загружено ${books.length} книг`);
-        return books || [];
-    } catch (error) {
-        console.error('Ошибка подключения:', error);
-        return [];
-    }
-}
-
 // ========== РАБОТА С ИЗБРАННЫМ ==========
+
+// Загрузить избранное
 async function loadFavorites() {
     const user = getCurrentUser();
     if (!user) {
@@ -212,6 +192,7 @@ async function loadFavorites() {
         }
         
         favorites = data.map(item => item.book_id);
+        console.log(`✅ Загружено ${favorites.length} избранных книг`);
         return favorites;
     } catch (error) {
         console.error('Ошибка:', error);
@@ -220,6 +201,7 @@ async function loadFavorites() {
     }
 }
 
+// Добавить в избранное
 async function addToFavorites(bookId) {
     const user = getCurrentUser();
     if (!user) {
@@ -241,7 +223,7 @@ async function addToFavorites(bookId) {
         
         favorites.push(bookId);
         showToast('Добавлено в избранное', 'Книга сохранена в избранном', 'success');
-        filterBooks();
+        renderBooks();
         return true;
     } catch (error) {
         console.error('Ошибка:', error);
@@ -249,6 +231,7 @@ async function addToFavorites(bookId) {
     }
 }
 
+// Удалить из избранного
 async function removeFromFavorites(bookId) {
     const user = getCurrentUser();
     if (!user) return false;
@@ -268,7 +251,7 @@ async function removeFromFavorites(bookId) {
         
         favorites = favorites.filter(id => id !== bookId);
         showToast('Удалено из избранного', 'Книга удалена из избранного', 'success');
-        filterBooks();
+        renderBooks();
         return true;
     } catch (error) {
         console.error('Ошибка:', error);
@@ -276,79 +259,51 @@ async function removeFromFavorites(bookId) {
     }
 }
 
+// Проверить, в избранном ли книга
 function isFavorite(bookId) {
     return favorites.includes(bookId);
 }
 
-// ========== ФИЛЬТРАЦИЯ ==========
-function filterBooks() {
-    const genre = document.getElementById('genreFilter').value;
-    const sort = document.getElementById('sortFilter').value;
-    const priceMin = parseInt(document.getElementById('priceMin').value) || 0;
-    const priceMax = parseInt(document.getElementById('priceMax').value) || Infinity;
-    const filterBuy = document.getElementById('filterBuy').checked;
-    const filterRent = document.getElementById('filterRent').checked;
-    
-    filteredBooks = allBooks.filter(book => {
-        if (genre !== 'all' && !book.genre?.toLowerCase().includes(genre)) {
-            return false;
+// ========== ЗАГРУЗКА КНИГ ==========
+async function loadBooksFromSupabase() {
+    try {
+        const { data: books, error } = await supabase
+            .from('books')
+            .select('*');
+        
+        if (error) {
+            console.error('Ошибка загрузки:', error);
+            return [];
         }
         
-        const buyPrice = book.purchase_price || book.price || 0;
-        if (buyPrice < priceMin || buyPrice > priceMax) {
-            return false;
-        }
-        
-        if (!filterBuy && !filterRent) return false;
-        
-        return true;
-    });
-    
-    filteredBooks.sort((a, b) => {
-        const priceA = a.purchase_price || a.price || 0;
-        const priceB = b.purchase_price || b.price || 0;
-        
-        switch(sort) {
-            case 'price_asc':
-                return priceA - priceB;
-            case 'price_desc':
-                return priceB - priceA;
-            case 'title':
-                return a.title.localeCompare(b.title);
-            case 'new':
-                return new Date(b.created_at) - new Date(a.created_at);
-            default:
-                return 0;
-        }
-    });
-    
-    updateResultsCount();
-    currentPage = 1;
-    renderBooks();
+        return books || [];
+    } catch (error) {
+        console.error('Ошибка подключения:', error);
+        return [];
+    }
 }
 
 // ========== ОТРИСОВКА ==========
 function renderBooks() {
     const container = document.getElementById('booksGrid');
+    const emptyState = document.getElementById('emptyState');
+    const resultsCount = document.getElementById('resultsCount');
+    
     if (!container) return;
     
-    const start = (currentPage - 1) * booksPerPage;
-    const end = start + booksPerPage;
-    const pageBooks = filteredBooks.slice(start, end);
+    filteredBooks = allBooks.filter(book => isFavorite(book.id));
     
-    if (pageBooks.length === 0) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 60px 20px; grid-column: 1/-1;">
-                <i class="fas fa-book-open" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 16px; display: block;"></i>
-                <h3 style="color: #1e2a3a; margin-bottom: 8px;">Книги не найдены</h3>
-                <p style="color: #5a6e7c;">Попробуйте изменить параметры фильтрации</p>
-            </div>
-        `;
-        document.getElementById('pagination').innerHTML = '';
+    if (filteredBooks.length === 0) {
+        container.innerHTML = '';
+        if (emptyState) emptyState.style.display = 'block';
+        if (resultsCount) resultsCount.textContent = 'Нет избранных книг';
         return;
     }
     
-    container.innerHTML = pageBooks.map(book => `
+    if (emptyState) emptyState.style.display = 'none';
+    if (resultsCount) resultsCount.textContent = `${filteredBooks.length} книг в избранном`;
+    
+    container.innerHTML = filteredBooks.map(book => `
         <div class="book-card" data-id="${book.id}">
             <div class="book-cover">
                 <img src="${book.cover_image || 'https://placehold.co/300x400/e2e8f0/1e3c3a?text=📖+No+Cover'}" 
@@ -358,7 +313,7 @@ function renderBooks() {
             <div class="book-info">
                 <div class="book-header">
                     <div class="book-title">${escapeHtml(book.title)}</div>
-                    <button class="favorite-btn ${isFavorite(book.id) ? 'active' : ''}" data-id="${book.id}">
+                    <button class="favorite-btn active" data-id="${book.id}">
                         <i class="fas fa-heart"></i>
                     </button>
                 </div>
@@ -379,13 +334,7 @@ function renderBooks() {
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const bookId = parseInt(btn.dataset.id);
-            if (btn.classList.contains('active')) {
-                await removeFromFavorites(bookId);
-                btn.classList.remove('active');
-            } else {
-                await addToFavorites(bookId);
-                btn.classList.add('active');
-            }
+            await removeFromFavorites(bookId);
         });
     });
     
@@ -416,52 +365,7 @@ function renderBooks() {
             addToCart(book, 'buy', price);
         });
     });
-    
-    renderPagination();
 }
-
-function updateResultsCount() {
-    const countSpan = document.getElementById('resultsCount');
-    if (countSpan) {
-        countSpan.textContent = `Найдено ${filteredBooks.length} книг`;
-    }
-}
-
-function renderPagination() {
-    const pagination = document.getElementById('pagination');
-    if (!pagination) return;
-    
-    const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
-    
-    if (totalPages <= 1) {
-        pagination.innerHTML = '';
-        return;
-    }
-    
-    let html = '';
-    html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">‹</button>`;
-    
-    for (let i = 1; i <= totalPages; i++) {
-        if (i === currentPage) {
-            html += `<button class="active">${i}</button>`;
-        } else if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 2) {
-            html += `<button onclick="changePage(${i})">${i}</button>`;
-        } else if (i === currentPage - 3 || i === currentPage + 3) {
-            html += `<button disabled>…</button>`;
-        }
-    }
-    
-    html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">›</button>`;
-    pagination.innerHTML = html;
-}
-
-window.changePage = function(page) {
-    const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
-    if (page < 1 || page > totalPages) return;
-    currentPage = page;
-    renderBooks();
-    window.scrollTo({ top: document.querySelector('.catalog-results').offsetTop - 100, behavior: 'smooth' });
-};
 
 // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 function escapeHtml(str) {
@@ -494,17 +398,32 @@ function setupSearch() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 const query = e.target.value.toLowerCase();
-                if (query.length === 0) {
-                    filteredBooks = [...allBooks];
+                const filtered = allBooks.filter(book => 
+                    isFavorite(book.id) &&
+                    (book.title.toLowerCase().includes(query) || 
+                     book.author.toLowerCase().includes(query))
+                );
+                filteredBooks = filtered;
+                const container = document.getElementById('booksGrid');
+                const emptyState = document.getElementById('emptyState');
+                const resultsCount = document.getElementById('resultsCount');
+                
+                if (filtered.length === 0) {
+                    container.innerHTML = '';
+                    if (emptyState) {
+                        emptyState.style.display = 'block';
+                        emptyState.innerHTML = `
+                            <i class="fas fa-search" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 20px; display: block;"></i>
+                            <h2>Ничего не найдено</h2>
+                            <p>Попробуйте изменить поисковый запрос</p>
+                        `;
+                    }
+                    if (resultsCount) resultsCount.textContent = 'Ничего не найдено';
                 } else {
-                    filteredBooks = allBooks.filter(book => 
-                        book.title.toLowerCase().includes(query) || 
-                        book.author.toLowerCase().includes(query)
-                    );
+                    if (emptyState) emptyState.style.display = 'none';
+                    if (resultsCount) resultsCount.textContent = `${filtered.length} книг в избранном`;
+                    renderBooks();
                 }
-                updateResultsCount();
-                currentPage = 1;
-                renderBooks();
             }, 500);
         });
     }
@@ -548,7 +467,7 @@ function mobileMenu() {
     }
 }
 
-// ========== УПРАВЛЕНИЕ АВТОРИЗАЦИЕЙ ==========
+// ========== АВТОРИЗАЦИЯ ==========
 const modal = document.getElementById('authModal');
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
@@ -685,7 +604,7 @@ async function handleLogin() {
             closeModal();
             await updateUserUI();
             await loadFavorites();
-            filterBooks();
+            renderBooks();
         }, 1500);
     } else {
         showAuthMessage(result.error || 'Неверный email или пароль');
@@ -698,7 +617,7 @@ async function handleLogout() {
         showToast('Выход из аккаунта', 'Вы успешно вышли', 'success');
         await updateUserUI();
         favorites = [];
-        filterBooks();
+        renderBooks();
         cart = [];
         saveCart();
     } else {
@@ -786,33 +705,26 @@ function setupAuth() {
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🚀 Каталог загружен, инициализация...');
+    console.log('🚀 Избранное загружено, инициализация...');
     
     setupAuth();
     
     await checkCurrentUser();
     await updateUserUI();
+    
+    // Загружаем книги
+    allBooks = await loadBooksFromSupabase();
+    
+    // Загружаем избранное
     await loadFavorites();
     
-    allBooks = await loadBooksFromSupabase();
-    filteredBooks = [...allBooks];
-    updateResultsCount();
+    // Отрисовываем
     renderBooks();
     
     setupSearch();
     mobileMenu();
     
-    document.getElementById('applyFiltersBtn').addEventListener('click', filterBooks);
-    document.getElementById('resetFiltersBtn').addEventListener('click', () => {
-        document.getElementById('genreFilter').value = 'all';
-        document.getElementById('sortFilter').value = 'popular';
-        document.getElementById('priceMin').value = '';
-        document.getElementById('priceMax').value = '';
-        document.getElementById('filterBuy').checked = true;
-        document.getElementById('filterRent').checked = true;
-        filterBooks();
-    });
-    
+    // Корзина
     const cartBtn = document.querySelector('.cart-btn');
     if (cartBtn) {
         cartBtn.addEventListener('click', (e) => {
@@ -831,22 +743,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const checkoutBtn = document.getElementById('checkoutBtn');
     if (checkoutBtn) checkoutBtn.addEventListener('click', checkout);
-    
-    document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentView = btn.dataset.view;
-            const grid = document.getElementById('booksGrid');
-            if (grid) {
-                if (currentView === 'list') {
-                    grid.classList.add('list-view');
-                } else {
-                    grid.classList.remove('list-view');
-                }
-            }
-        });
-    });
     
     updateCartBadge();
 });

@@ -214,8 +214,102 @@ async function searchBooksInSupabase(query) {
     }
 }
 
+// ========== РАБОТА С ИЗБРАННЫМ ==========
+let favorites = [];
+
+async function loadFavorites() {
+    const user = getCurrentUser();
+    if (!user) {
+        favorites = [];
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabase
+            .from('favorites')
+            .select('book_id')
+            .eq('user_id', user.id);
+        
+        if (error) {
+            console.error('Ошибка загрузки избранного:', error);
+            favorites = [];
+            return;
+        }
+        
+        favorites = data.map(item => item.book_id);
+        return favorites;
+    } catch (error) {
+        console.error('Ошибка:', error);
+        favorites = [];
+        return [];
+    }
+}
+
+async function addToFavorites(bookId) {
+    const user = getCurrentUser();
+    if (!user) {
+        showToast('Требуется авторизация', 'Войдите, чтобы добавить в избранное', 'error');
+        setTimeout(() => openModal(), 1500);
+        return false;
+    }
+    
+    try {
+        const { error } = await supabase
+            .from('favorites')
+            .insert([{ user_id: user.id, book_id: bookId }]);
+        
+        if (error) {
+            console.error('Ошибка добавления в избранное:', error);
+            showToast('Ошибка', 'Не удалось добавить в избранное', 'error');
+            return false;
+        }
+        
+        favorites.push(bookId);
+        showToast('Добавлено в избранное', 'Книга сохранена в избранном', 'success');
+        renderBooks(allBooks);
+        return true;
+    } catch (error) {
+        console.error('Ошибка:', error);
+        return false;
+    }
+}
+
+async function removeFromFavorites(bookId) {
+    const user = getCurrentUser();
+    if (!user) return false;
+    
+    try {
+        const { error } = await supabase
+            .from('favorites')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('book_id', bookId);
+        
+        if (error) {
+            console.error('Ошибка удаления из избранного:', error);
+            showToast('Ошибка', 'Не удалось удалить из избранного', 'error');
+            return false;
+        }
+        
+        favorites = favorites.filter(id => id !== bookId);
+        showToast('Удалено из избранного', 'Книга удалена из избранного', 'success');
+        renderBooks(allBooks);
+        return true;
+    } catch (error) {
+        console.error('Ошибка:', error);
+        return false;
+    }
+}
+
+function isFavorite(bookId) {
+    return favorites.includes(bookId);
+}
+
 // ========== ФУНКЦИЯ ОТРИСОВКИ ==========
+let allBooks = [];
+
 function renderBooks(books) {
+    allBooks = books;
     const booksContainer = document.getElementById('booksGrid');
     if (!booksContainer) return;
     
@@ -230,10 +324,14 @@ function renderBooks(books) {
                 <img src="${book.cover_image || 'https://placehold.co/300x400/e2e8f0/1e3c3a?text=📖+No+Cover'}" 
                      alt="${book.title}" 
                      onerror="this.src='https://placehold.co/300x400/e2e8f0/1e3c3a?text=📖+No+Cover'">
-                <!-- Удалена строка с отображением жанра -->
             </div>
             <div class="book-info">
-                <div class="book-title">${escapeHtml(book.title)}</div>
+                <div class="book-header">
+                    <div class="book-title">${escapeHtml(book.title)}</div>
+                    <button class="favorite-btn ${isFavorite(book.id) ? 'active' : ''}" data-id="${book.id}">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                </div>
                 <div class="book-author">${escapeHtml(book.author)}</div>
                 <div class="book-description">${book.description ? escapeHtml(book.description.substring(0, 80)) + '...' : ''}</div>
                 <div class="book-actions">
@@ -247,18 +345,51 @@ function renderBooks(books) {
         </div>
     `).join('');
     
-    // Обработчики для кнопок
-    document.querySelectorAll('.rent-btn, .buy-btn').forEach(btn => {
+    // Обработчики для кнопок избранного
+    document.querySelectorAll('.favorite-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const bookId = parseInt(btn.dataset.id);
+            if (btn.classList.contains('active')) {
+                await removeFromFavorites(bookId);
+                btn.classList.remove('active');
+            } else {
+                await addToFavorites(bookId);
+                btn.classList.add('active');
+            }
+        });
+    });
+    
+    // Обработчики для кнопок корзины
+    document.querySelectorAll('.rent-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const title = btn.getAttribute('data-title');
-            const price = btn.getAttribute('data-price');
-            const action = btn.classList.contains('rent-btn') ? 'аренду' : 'покупку';
-            alert(`✅ Книга "${title}" добавлена для ${action} за ${price} ₽`);
-            updateCartBadge();
+            const book = {
+                id: parseInt(btn.dataset.id),
+                title: btn.dataset.title,
+                author: btn.dataset.author,
+                cover_image: btn.dataset.cover
+            };
+            const price = parseInt(btn.dataset.price);
+            addToCart(book, 'rent', price);
+        });
+    });
+    
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const book = {
+                id: parseInt(btn.dataset.id),
+                title: btn.dataset.title,
+                author: btn.dataset.author,
+                cover_image: btn.dataset.cover
+            };
+            const price = parseInt(btn.dataset.price);
+            addToCart(book, 'buy', price);
         });
     });
 }
+
 // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 function escapeHtml(str) {
     if (!str) return '';
@@ -469,10 +600,12 @@ async function handleLogin() {
     
     if (result.success) {
         showAuthMessage('Добро пожаловать!', false);
-        setTimeout(() => {
+        setTimeout(async () => {
             closeModal();
-            updateUserUI();
-            loadBooksFromSupabase().then(renderBooks);
+            await updateUserUI();
+            await loadFavorites();
+            const books = await loadBooksFromSupabase();
+            renderBooks(books);
         }, 1500);
     } else {
         showAuthMessage(result.error || 'Неверный email или пароль');
@@ -483,8 +616,10 @@ async function handleLogout() {
     const result = await logoutUser();
     if (result.success) {
         showToast('Выход из аккаунта', 'Вы успешно вышли', 'success');
-        updateUserUI();
-        loadBooksFromSupabase().then(renderBooks);
+        await updateUserUI();
+        favorites = [];
+        const books = await loadBooksFromSupabase();
+        renderBooks(books);
         cart = [];
         saveCart();
     } else {
@@ -511,8 +646,6 @@ async function handleResetPassword() {
         showAuthMessage(result.error || 'Ошибка сброса пароля');
     }
 }
-
-// ========== ИНИЦИАЛИЗАЦИЯ ==========
 
 function setupAuth() {
     const openModalBtn = document.getElementById('openLoginModal');
@@ -580,6 +713,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     await checkCurrentUser();
     await updateUserUI();
+    await loadFavorites();
     
     const booksContainer = document.getElementById('booksGrid');
     if (booksContainer) {
